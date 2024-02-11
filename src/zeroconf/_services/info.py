@@ -812,8 +812,8 @@ class ServiceInfo(RecordUpdateListener):
 
         now = current_time_millis()
 
-        if self._load_from_cache(zc, now) and load_from_cache:
-            return True
+        # if self._load_from_cache(zc, now) and load_from_cache:
+        #     return True
 
         if TYPE_CHECKING:
             assert zc.loop is not None
