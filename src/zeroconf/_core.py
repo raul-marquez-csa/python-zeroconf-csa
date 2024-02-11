@@ -419,8 +419,8 @@ class Zeroconf(QuietLogger):
         # via multicast.
         #
         # _CLASS_UNIQUE is the "QU" bit
-        # out.add_question(DNSQuestion(info.type, _TYPE_PTR, _CLASS_IN | _CLASS_UNIQUE))
-        # out.add_authorative_answer(info.dns_pointer())
+        out.add_question(DNSQuestion(info.type, _TYPE_PTR, _CLASS_IN | _CLASS_UNIQUE))
+        out.add_authorative_answer(info.dns_pointer())
         return out
 
     def _add_broadcast_answer(  # pylint: disable=no-self-use
@@ -546,7 +546,7 @@ class Zeroconf(QuietLogger):
                 now = current_time_millis()
                 continue
 
-            self.async_send(self.generate_service_query(info))
+            # self.async_send(self.generate_service_query(info))
             i += 1
             next_time += _CHECK_TIME
 
