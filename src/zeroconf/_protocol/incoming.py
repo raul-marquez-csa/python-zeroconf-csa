@@ -20,6 +20,7 @@
     USA
 """
 
+import dns.message
 import struct
 import sys
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -119,7 +120,8 @@ class DNSIncoming:
         self.scope_id = scope_id
         self._has_qu_question = False
         try:
-            print(f"\n\t\t\t\tINCOMING DATA: {self.data}\n")
+            msg = dns.message.from_wire(self.data)
+            print(f"\n\t\t\t\tINCOMING DATA: {msg}\n")
             self._initial_parse()
         except DECODE_EXCEPTIONS:
             self._log_exception_debug(
