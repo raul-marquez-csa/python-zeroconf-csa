@@ -794,7 +794,8 @@ class ServiceInfo(RecordUpdateListener):
         question_type: Optional[DNSQuestionType] = None,
         addr: Optional[str] = None,
         port: int = _MDNS_PORT,
-        record_type: DNSRecordType = None
+        record_type: DNSRecordType = None,
+        load_from_cache: bool = True
     ) -> bool:
         """Returns true if the service could be discovered on the
         network, and updates this object with details discovered.
@@ -811,8 +812,9 @@ class ServiceInfo(RecordUpdateListener):
 
         now = current_time_millis()
 
-        if self._load_from_cache(zc, now):
-            return True
+        if load_from_cache:
+            if self._load_from_cache(zc, now):
+                return True
 
         if TYPE_CHECKING:
             assert zc.loop is not None
