@@ -27,6 +27,8 @@ import threading
 from types import TracebackType
 from typing import Awaitable, Dict, List, Optional, Set, Tuple, Type, Union
 
+import dns
+
 from ._cache import DNSCache
 from ._dns import DNSQuestion, DNSQuestionType
 from ._engine import AsyncEngine
@@ -611,7 +613,6 @@ class Zeroconf(QuietLogger):
         v6_flow_scope: Union[Tuple[()], Tuple[int, int]] = (),
         transport: Optional[_WrappedTransport] = None,
     ) -> None:
-        print(f"\n\tasync_send Zeroconf out.packets {out.packets()}\n")
         """Sends an outgoing packet."""
         if self.done:
             return
@@ -621,7 +622,10 @@ class Zeroconf(QuietLogger):
         transports = [transport] if transport else self.engine.senders
         log_debug = log.isEnabledFor(logging.DEBUG)
 
+        print("-------")
         for packet_num, packet in enumerate(out.packets()):
+            msg = dns.message.from_wire(packet)
+            print(f"\n\t\t\t\tOUTGOING DATA: {msg} - {packet_num}\n")
             if len(packet) > _MAX_MSG_ABSOLUTE:
                 self.log_warning_once("Dropping %r over-sized packet (%d bytes) %r", out, len(packet), packet)
                 return
@@ -629,7 +633,7 @@ class Zeroconf(QuietLogger):
                 async_send_with_transport(
                     log_debug, send_transport, packet, packet_num, out, addr, port, v6_flow_scope
                 )
-
+        print("-------")
     def _close(self) -> None:
         # print("\n\t_close Zeroconf\n")
         """Set global done and remove all service listeners."""
