@@ -611,7 +611,7 @@ class Zeroconf(QuietLogger):
         v6_flow_scope: Union[Tuple[()], Tuple[int, int]] = (),
         transport: Optional[_WrappedTransport] = None,
     ) -> None:
-        print("\n\tasync_send Zeroconf\n")
+        print(f"\n\tasync_send Zeroconf out.packets {out.packets()}\n")
         """Sends an outgoing packet."""
         if self.done:
             return
