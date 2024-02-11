@@ -95,7 +95,7 @@ class DNSOutgoing:
     )
 
     def __init__(self, flags: int, multicast: bool = True, id_: int = 0) -> None:
-        print("\n\t__init__ DNSOutgoing\n")
+        # print("\n\t__init__ DNSOutgoing\n")
         self.flags = flags
         self.finished = False
         self.id = id_

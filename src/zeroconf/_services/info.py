@@ -807,7 +807,6 @@ class ServiceInfo(RecordUpdateListener):
         requests to a specific host that may be able to respond across
         subnets.
         """
-        print("async_request")
         if not zc.started:
             await zc.async_wait_for_start()
 
