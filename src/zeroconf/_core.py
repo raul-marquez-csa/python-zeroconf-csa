@@ -623,6 +623,7 @@ class Zeroconf(QuietLogger):
         log_debug = log.isEnabledFor(logging.DEBUG)
 
         print("-------")
+        print(f"out: {out}")
         for packet_num, packet in enumerate(out.packets()):
             msg = dns.message.from_wire(packet)
             print(f"\n\t\t\t\tOUTGOING DATA: {msg} - {packet_num}\n")
