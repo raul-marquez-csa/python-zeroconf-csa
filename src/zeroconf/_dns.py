@@ -87,40 +87,40 @@ class DNSEntry:
     __slots__ = ('key', 'name', 'type', 'class_', 'unique')
 
     def __init__(self, name: str, type_: int, class_: int) -> None:
-        print("\n\n\t__init__ DNSEntry\n\n")
+        print("\n\t__init__ DNSEntry\n")
         self.name = name
         self.key = name.lower()
         self.type = type_
         self._set_class(class_)
 
     def _set_class(self, class_: _int) -> None:
-        print("\n\n\t_set_class\n\n")
+        print("\n\tDNSEntry _set_class\n")
         self.class_ = class_ & _CLASS_MASK
         self.unique = (class_ & _CLASS_UNIQUE) != 0
 
     def _dns_entry_matches(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_dns_entry_matches\n\n")
+        print("\n\tDNSEntry _dns_entry_matches\n")
         return self.key == other.key and self.type == other.type and self.class_ == other.class_
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSEntry __eq__\n")
         """Equality test on key (lowercase name), type, and class"""
         return isinstance(other, DNSEntry) and self._dns_entry_matches(other)
 
     @staticmethod
     def get_class_(class_: int) -> str:
-        print("\n\n\tget_class_\n\n")
+        print("\n\tDNSEntry get_class_\n")
         """Class accessor"""
         return _CLASSES.get(class_, f"?({class_})")
 
     @staticmethod
     def get_type(t: int) -> str:
-        print("\n\n\tget_type\n\n")
+        print("\n\tDNSEntry get_type\n")
         """Type accessor"""
         return _TYPES.get(t, f"?({t})")
 
     def entry_to_string(self, hdr: str, other: Optional[Union[bytes, str]]) -> str:
-        print("\n\n\tentry_to_string\n\n")
+        print("\n\tDNSEntry entry_to_string\n")
         """String representation with additional information"""
         return "{}[{},{}{},{}]{}".format(
             hdr,
@@ -139,33 +139,33 @@ class DNSQuestion(DNSEntry):
     __slots__ = ('_hash',)
 
     def __init__(self, name: str, type_: int, class_: int) -> None:
-        print("\n\n\t__init__\n\n")
+        print("\n\tDNSQuestion __init__ DNSQuestion\n")
         super().__init__(name, type_, class_)
         self._hash = hash((self.key, type_, self.class_))
 
     def answered_by(self, rec: 'DNSRecord') -> bool:
-        print("\n\n\tanswered_by\n\n")
+        print("\n\tDNSQuestion answered_by\n")
         """Returns true if the question is answered by the record"""
         return self.class_ == rec.class_ and self.type in (rec.type, _TYPE_ANY) and self.name == rec.name
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSQuestion __hash__\n")
         return self._hash
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSQuestion __eq__\n")
         """Tests equality on dns question."""
         return isinstance(other, DNSQuestion) and self._dns_entry_matches(other)
 
     @property
     def max_size(self) -> int:
-        print("\n\n\tmax_size\n\n")
+        print("\n\tDNSQuestion max_size\n")
         """Maximum size of the question in the packet."""
         return len(self.name.encode('utf-8')) + _LEN_BYTE + _LEN_SHORT + _LEN_SHORT  # type  # class
 
     @property
     def unicast(self) -> bool:
-        print("\n\n\tunicast\n\n")
+        print("\n\tDNSQuestion unicast\n")
         """Returns true if the QU (not QM) is set.
 
         unique shares the same mask as the one
@@ -175,12 +175,12 @@ class DNSQuestion(DNSEntry):
 
     @unicast.setter
     def unicast(self, value: bool) -> None:
-        print("\n\n\tunicast\n\n")
+        print("\n\tDNSQuestion unicast\n")
         """Sets the QU bit (not QM)."""
         self.unique = value
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSQuestion __repr__\n")
         """String representation"""
         return "{}[question,{},{},{}]".format(
             self.get_type(self.type),
@@ -200,18 +200,18 @@ class DNSRecord(DNSEntry):
     def __init__(
         self, name: str, type_: int, class_: int, ttl: Union[float, int], created: Optional[float] = None
     ) -> None:
-        print("\n\n\t__init__ DNSRecord\n\n")
+        print("\n\tDNSRecord __init__ DNSRecord\n")
         super().__init__(name, type_, class_)
         self.ttl = ttl
         self.created = created or current_time_millis()
 
     def __eq__(self, other: Any) -> bool:  # pylint: disable=no-self-use
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSRecord __eq__\n")
         """Abstract method"""
         raise AbstractMethodException
 
     def suppressed_by(self, msg: 'DNSIncoming') -> bool:
-        print("\n\n\tsuppressed_by\n\n")
+        print("\n\tDNSRecord suppressed_by\n")
         """Returns true if any answer in a message can suffice for the
         information held in this record."""
         answers = msg.answers()
@@ -221,58 +221,58 @@ class DNSRecord(DNSEntry):
         return False
 
     def _suppressed_by_answer(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_suppressed_by_answer\n\n")
+        print("\n\tDNSRecord _suppressed_by_answer\n")
         """Returns true if another record has same name, type and class,
         and if its TTL is at least half of this record's."""
         return self == other and other.ttl > (self.ttl / 2)
 
     def get_expiration_time(self, percent: _int) -> float:
-        print("\n\n\tget_expiration_time\n\n")
+        print("\n\tDNSRecord get_expiration_time\n")
         """Returns the time at which this record will have expired
         by a certain percentage."""
         return self.created + (percent * self.ttl * 10)
 
     # TODO: Switch to just int here
     def get_remaining_ttl(self, now: _float) -> Union[int, float]:
-        print("\n\n\tget_remaining_ttl\n\n")
+        print("\n\tDNSRecord get_remaining_ttl\n")
         """Returns the remaining TTL in seconds."""
         remain = (self.created + (_EXPIRE_FULL_TIME_MS * self.ttl) - now) / 1000.0
         return 0 if remain < 0 else remain
 
     def is_expired(self, now: _float) -> bool:
-        print("\n\n\tis_expired\n\n")
+        print("\n\tDNSRecord is_expired\n")
         """Returns true if this record has expired."""
         return self.created + (_EXPIRE_FULL_TIME_MS * self.ttl) <= now
 
     def is_stale(self, now: _float) -> bool:
-        print("\n\n\tis_stale\n\n")
+        print("\n\tDNSRecord is_stale\n")
         """Returns true if this record is at least half way expired."""
         return self.created + (_EXPIRE_STALE_TIME_MS * self.ttl) <= now
 
     def is_recent(self, now: _float) -> bool:
-        print("\n\n\tis_recent\n\n")
+        print("\n\tDNSRecord is_recent\n")
         """Returns true if the record more than one quarter of its TTL remaining."""
         return self.created + (_RECENT_TIME_MS * self.ttl) > now
 
     def reset_ttl(self, other) -> None:  # type: ignore[no-untyped-def]
-        print("\n\n\treset_ttl\n\n")
+        print("\n\tDNSRecord reset_ttl\n")
         """Sets this record's TTL and created time to that of
         another record."""
         self.set_created_ttl(other.created, other.ttl)
 
     def set_created_ttl(self, created: _float, ttl: Union[float, int]) -> None:
-        print("\n\n\tset_created_ttl\n\n")
+        print("\n\tDNSRecord set_created_ttl\n")
         """Set the created and ttl of a record."""
         self.created = created
         self.ttl = ttl
 
     def write(self, out: 'DNSOutgoing') -> None:  # pylint: disable=no-self-use
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSRecord write\n")
         """Abstract method"""
         raise AbstractMethodException
 
     def to_string(self, other: Union[bytes, str]) -> str:
-        print("\n\n\tto_string\n\n")
+        print("\n\tDNSRecord to_string\n")
         """String representation with additional information"""
         arg = f"{self.ttl}/{int(self.get_remaining_ttl(current_time_millis()))},{cast(Any, other)}"
         return DNSEntry.entry_to_string(self, "record", arg)
@@ -294,24 +294,24 @@ class DNSAddress(DNSRecord):
         scope_id: Optional[int] = None,
         created: Optional[float] = None,
     ) -> None:
-        print("\n\n\t__init__ \n\n")
+        print("\n\tDNSAddress __init__ DNSAddress\n")
         super().__init__(name, type_, class_, ttl, created)
         self.address = address
         self.scope_id = scope_id
         self._hash = hash((self.key, type_, self.class_, address, scope_id))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSAddress write\n")
         """Used in constructing an outgoing packet"""
         out.write_string(self.address)
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSAddress __eq__\n")
         """Tests equality on address"""
         return isinstance(other, DNSAddress) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_eq\n\n")
+        print("\n\tDNSAddress _eq\n")
         return (
             self.address == other.address
             and self.scope_id == other.scope_id
@@ -319,12 +319,12 @@ class DNSAddress(DNSRecord):
         )
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSAddress __hash__\n")
         """Hash to compare like DNSAddresses."""
         return self._hash
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSAddress __repr__\n")
         """String representation"""
         try:
             return self.to_string(
@@ -345,35 +345,35 @@ class DNSHinfo(DNSRecord):
     def __init__(
         self, name: str, type_: int, class_: int, ttl: int, cpu: str, os: str, created: Optional[float] = None
     ) -> None:
-        print("\n\n\t__init__ DNSHinfo\n\n")
+        print("\n\tDNSHinfo __init__ DNSHinfo\n")
         super().__init__(name, type_, class_, ttl, created)
         self.cpu = cpu
         self.os = os
         self._hash = hash((self.key, type_, self.class_, cpu, os))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSHinfo write\n")
         """Used in constructing an outgoing packet"""
         out.write_character_string(self.cpu.encode('utf-8'))
         out.write_character_string(self.os.encode('utf-8'))
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSHinfo __eq__\n")
         """Tests equality on cpu and os."""
         return isinstance(other, DNSHinfo) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_eq\n\n")
+        print("\n\tDNSHinfo _eq\n")
         """Tests equality on cpu and os."""
         return self.cpu == other.cpu and self.os == other.os and self._dns_entry_matches(other)
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSHinfo __hash__\n")
         """Hash to compare like DNSHinfo."""
         return self._hash
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSHinfo __repr__\n")
         """String representation"""
         return self.to_string(self.cpu + " " + self.os)
 
@@ -387,7 +387,7 @@ class DNSPointer(DNSRecord):
     def __init__(
         self, name: str, type_: int, class_: int, ttl: int, alias: str, created: Optional[float] = None
     ) -> None:
-        print("\n\n\t__init__ DNSPointer\n\n")
+        print("\n\tDNSPointer __init__ DNSPointer\n")
         super().__init__(name, type_, class_, ttl, created)
         self.alias = alias
         self.alias_key = alias.lower()
@@ -395,7 +395,7 @@ class DNSPointer(DNSRecord):
 
     @property
     def max_size_compressed(self) -> int:
-        print("\n\n\tmax_size_compressed\n\n")
+        print("\n\tDNSPointer max_size_compressed\n")
         """Maximum size of the record in the packet assuming the name has been compressed."""
         return (
             _BASE_MAX_SIZE
@@ -405,27 +405,27 @@ class DNSPointer(DNSRecord):
         )
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSPointer write\n")
         """Used in constructing an outgoing packet"""
         out.write_name(self.alias)
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSPointer __eq__\n")
         """Tests equality on alias."""
         return isinstance(other, DNSPointer) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_eq\n\n")
+        print("\n\tDNSPointer _eq\n")
         """Tests equality on alias."""
         return self.alias_key == other.alias_key and self._dns_entry_matches(other)
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSPointer __hash__\n")
         """Hash to compare like DNSPointer."""
         return self._hash
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSPointer __repr__\n")
         """String representation"""
         return self.to_string(self.alias)
 
@@ -439,33 +439,33 @@ class DNSText(DNSRecord):
     def __init__(
         self, name: str, type_: int, class_: int, ttl: int, text: bytes, created: Optional[float] = None
     ) -> None:
-        print("\n\n\t__init__ DNSText\n\n")
+        print("\n\tDNSText __init__ DNSText\n")
         super().__init__(name, type_, class_, ttl, created)
         self.text = text
         self._hash = hash((self.key, type_, self.class_, text))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSText write\n")
         """Used in constructing an outgoing packet"""
         out.write_string(self.text)
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSText __hash__\n")
         """Hash to compare like DNSText."""
         return self._hash
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSText __eq__\n")
         """Tests equality on text."""
         return isinstance(other, DNSText) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_eq\n\n")
+        print("\n\tDNSText _eq\n")
         """Tests equality on text."""
         return self.text == other.text and self._dns_entry_matches(other)
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSText __repr__\n")
         """String representation"""
         if len(self.text) > 10:
             return self.to_string(self.text[:7]) + "..."
@@ -490,7 +490,7 @@ class DNSService(DNSRecord):
         server: str,
         created: Optional[float] = None,
     ) -> None:
-        print("\n\n\t__init__ DNSService\n\n")
+        print("\n\tDNSService __init__ DNSService\n")
         super().__init__(name, type_, class_, ttl, created)
         self.priority = priority
         self.weight = weight
@@ -500,7 +500,7 @@ class DNSService(DNSRecord):
         self._hash = hash((self.key, type_, self.class_, priority, weight, port, self.server_key))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSService write\n")
         """Used in constructing an outgoing packet"""
         out.write_short(self.priority)
         out.write_short(self.weight)
@@ -508,12 +508,12 @@ class DNSService(DNSRecord):
         out.write_name(self.server)
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSService __eq__\n")
         """Tests equality on priority, weight, port and server"""
         return isinstance(other, DNSService) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_eq\n\n")
+        print("\n\tDNSService _eq\n")
         """Tests equality on priority, weight, port and server."""
         return (
             self.priority == other.priority
@@ -524,12 +524,12 @@ class DNSService(DNSRecord):
         )
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSService __hash__\n")
         """Hash to compare like DNSService."""
         return self._hash
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSService __repr__\n")
         """String representation"""
         return self.to_string(f"{self.server}:{self.port}")
 
@@ -550,14 +550,14 @@ class DNSNsec(DNSRecord):
         rdtypes: List[int],
         created: Optional[float] = None,
     ) -> None:
-        print("\n\n\t__init__ DNSNsec\n\n")
+        print("\n\tDNSNsec __init__ DNSNsec\n")
         super().__init__(name, type_, class_, ttl, created)
         self.next_name = next_name
         self.rdtypes = sorted(rdtypes)
         self._hash = hash((self.key, type_, self.class_, next_name, *self.rdtypes))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\n\twrite\n\n")
+        print("\n\tDNSNsec write\n")
         """Used in constructing an outgoing packet."""
         bitmap = bytearray(b'\0' * 32)
         total_octets = 0
@@ -578,12 +578,12 @@ class DNSNsec(DNSRecord):
         out.write_string(out_bytes)
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\n\t__eq__\n\n")
+        print("\n\tDNSNsec __eq__\n")
         """Tests equality on next_name and rdtypes."""
         return isinstance(other, DNSNsec) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\n\t_eq\n\n")
+        print("\n\tDNSNsec _eq\n")
         """Tests equality on next_name and rdtypes."""
         return (
             self.next_name == other.next_name
@@ -592,12 +592,12 @@ class DNSNsec(DNSRecord):
         )
 
     def __hash__(self) -> int:
-        print("\n\n\t__hash__\n\n")
+        print("\n\tDNSNsec __hash__\n")
         """Hash to compare like DNSNSec."""
         return self._hash
 
     def __repr__(self) -> str:
-        print("\n\n\t__repr__\n\n")
+        print("\n\tDNSNsec __repr__\n")
         """String representation"""
         return self.to_string(
             self.next_name + "," + "|".join([self.get_type(type_) for type_ in self.rdtypes])
@@ -613,24 +613,24 @@ class DNSRRSet:
     __slots__ = ('_records', '_lookup')
 
     def __init__(self, records: List[DNSRecord]) -> None:
-        print("\n\n\t__init__\n\n")
+        print("\n\tDNSRRSet __init__ DNSRRSet\n")
         """Create an RRset from records sets."""
         self._records = records
         self._lookup: Optional[Dict[DNSRecord, DNSRecord]] = None
 
     @property
     def lookup(self) -> Dict[DNSRecord, DNSRecord]:
-        print("\n\n\tlookup\n\n")
+        print("\n\tDNSRRSet lookup\n")
         """Return the lookup table."""
         return self._get_lookup()
 
     def lookup_set(self) -> Set[DNSRecord]:
-        print("\n\n\tlookup_set\n\n")
+        print("\n\tDNSRRSet lookup_set\n")
         """Return the lookup table as aset."""
         return set(self._get_lookup())
 
     def _get_lookup(self) -> Dict[DNSRecord, DNSRecord]:
-        print("\n\n\t_get_lookup\n\n")
+        print("\n\tDNSRRSet _get_lookup\n")
         """Return the lookup table, building it if needed."""
         if self._lookup is None:
             # Build the hash table so we can lookup the record ttl
@@ -638,7 +638,7 @@ class DNSRRSet:
         return self._lookup
 
     def suppresses(self, record: _DNSRecord) -> bool:
-        print("\n\n\tsuppresses\n\n")
+        print("\n\tDNSRRSet suppresses\n")
         """Returns true if any answer in the rrset can suffice for the
         information held in this record."""
         lookup = self._get_lookup()
