@@ -129,48 +129,58 @@ class DNSIncoming:
             )
 
     def is_query(self) -> bool:
+        print("\n\t\t\tis_query DNSIncoming")
         """Returns true if this is a query."""
         return (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_QUERY
 
     def is_response(self) -> bool:
+        print("\n\t\t\tis_response DNSIncoming")
         """Returns true if this is a response."""
         return (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_RESPONSE
 
     def has_qu_question(self) -> bool:
+        print("\n\t\t\thas_qu_question DNSIncoming")
         """Returns true if any question is a QU question."""
         return self._has_qu_question
 
     @property
     def truncated(self) -> bool:
+        print("\n\t\t\ttruncated DNSIncoming")
         """Returns true if this is a truncated."""
         return (self.flags & _FLAGS_TC) == _FLAGS_TC
 
     @property
     def questions(self) -> List[DNSQuestion]:
+        print("\n\t\t\tquestions DNSIncoming")
         """Questions in the packet."""
         return self._questions
 
     @property
     def num_questions(self) -> int:
+        print("\n\t\t\tnum_questions DNSIncoming")
         """Number of questions in the packet."""
         return self._num_questions
 
     @property
     def num_answers(self) -> int:
+        print("\n\t\t\tnum_answers DNSIncoming")
         """Number of answers in the packet."""
         return self._num_answers
 
     @property
     def num_authorities(self) -> int:
+        print("\n\t\t\tnum_authorities DNSIncoming")
         """Number of authorities in the packet."""
         return self._num_authorities
 
     @property
     def num_additionals(self) -> int:
+        print("\n\t\t\tnum_additionals DNSIncoming")
         """Number of additionals in the packet."""
         return self._num_additionals
 
     def _initial_parse(self) -> None:
+        print("\n\t\t\t_initial_parse DNSIncoming")
         """Parse the data needed to initalize the packet object."""
         self._read_header()
         self._read_questions()
@@ -180,6 +190,7 @@ class DNSIncoming:
 
     @classmethod
     def _log_exception_debug(cls, *logger_data: Any) -> None:
+        print("\n\t\t\t_log_exception_debug DNSIncoming")
         log_exc_info = False
         exc_info = sys.exc_info()
         exc_str = str(exc_info[1])
@@ -190,6 +201,7 @@ class DNSIncoming:
         log.debug(*(logger_data or ['Exception occurred']), exc_info=log_exc_info)
 
     def answers(self) -> List[DNSRecord]:
+        print("\n\t\t\tanswers DNSIncoming")
         """Answers in the packet."""
         if not self._did_read_others:
             try:
@@ -204,10 +216,12 @@ class DNSIncoming:
         return self._answers
 
     def is_probe(self) -> bool:
+        print("\n\t\t\tis_probe DNSIncoming")
         """Returns true if this is a probe."""
         return self._num_authorities > 0
 
     def __repr__(self) -> str:
+        print("\n\t\t\t__repr__ DNSIncoming")
         return '<DNSIncoming:{%s}>' % ', '.join(
             [
                 'id=%s' % self.id,
@@ -223,6 +237,7 @@ class DNSIncoming:
         )
 
     def _read_header(self) -> None:
+        print("\n\t\t\t_read_header DNSIncoming")
         """Reads header portion of packet"""
         view = self.view
         offset = self.offset
@@ -236,6 +251,7 @@ class DNSIncoming:
         self._num_additionals = view[offset + 10] << 8 | view[offset + 11]
 
     def _read_questions(self) -> None:
+        print("\n\t\t\t_read_questions DNSIncoming")
         """Reads questions section of packet"""
         view = self.view
         questions = self._questions
@@ -252,6 +268,7 @@ class DNSIncoming:
             questions.append(question)
 
     def _read_character_string(self) -> str:
+        print("\n\t\t\t_read_character_string DNSIncoming")
         """Reads a character string from the packet"""
         length = self.view[self.offset]
         self.offset += 1
@@ -260,12 +277,14 @@ class DNSIncoming:
         return info
 
     def _read_string(self, length: _int) -> bytes:
+        print("\n\t\t\t_read_string DNSIncoming")
         """Reads a string of a given length from the packet"""
         info = self.data[self.offset : self.offset + length]
         self.offset += length
         return info
 
     def _read_others(self) -> None:
+        print("\n\t\t\t_read_others DNSIncoming")
         """Reads the answers, authorities and additionals section of the
         packet"""
         self._did_read_others = True
@@ -304,6 +323,7 @@ class DNSIncoming:
     def _read_record(
         self, domain: _str, type_: _int, class_: _int, ttl: _int, length: _int
     ) -> Optional[DNSRecord]:
+        print("\n\t\t\t_read_record DNSIncoming")
         """Read known records types and skip unknown ones."""
         if type_ == _TYPE_A:
             return DNSAddress(domain, type_, class_, ttl, self._read_string(4), None, self.now)
@@ -360,6 +380,7 @@ class DNSIncoming:
         return None
 
     def _read_bitmap(self, end: _int) -> List[int]:
+        print("\n\t\t\t_read_bitmap DNSIncoming")
         """Reads an NSEC bitmap from the packet."""
         rdtypes = []
         view = self.view
@@ -378,6 +399,7 @@ class DNSIncoming:
         return rdtypes
 
     def _read_name(self) -> str:
+        print("\n\t\t\t_read_name DNSIncoming")
         """Reads a domain name from the packet."""
         labels: List[str] = []
         seen_pointers: Set[int] = set()
@@ -392,6 +414,7 @@ class DNSIncoming:
         return name
 
     def _decode_labels_at_offset(self, off: _int, labels: List[str], seen_pointers: Set[int]) -> int:
+        print("\n\t\t\t_decode_labels_at_offset DNSIncoming")
         # This is a tight loop that is called frequently, small optimizations can make a difference.
         view = self.view
         while off < self._data_len:
