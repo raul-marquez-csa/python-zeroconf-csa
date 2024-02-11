@@ -439,33 +439,33 @@ class DNSText(DNSRecord):
     def __init__(
         self, name: str, type_: int, class_: int, ttl: int, text: bytes, created: Optional[float] = None
     ) -> None:
-        print("\n\tDNSText __init__ DNSText\n")
+        # print("\n\tDNSText __init__ DNSText\n")
         super().__init__(name, type_, class_, ttl, created)
         self.text = text
         self._hash = hash((self.key, type_, self.class_, text))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\tDNSText write\n")
+        # print("\n\tDNSText write\n")
         """Used in constructing an outgoing packet"""
         out.write_string(self.text)
 
     def __hash__(self) -> int:
-        print("\n\tDNSText __hash__\n")
+        # print("\n\tDNSText __hash__\n")
         """Hash to compare like DNSText."""
         return self._hash
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\tDNSText __eq__\n")
+        # print("\n\tDNSText __eq__\n")
         """Tests equality on text."""
         return isinstance(other, DNSText) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\tDNSText _eq\n")
+        # print("\n\tDNSText _eq\n")
         """Tests equality on text."""
         return self.text == other.text and self._dns_entry_matches(other)
 
     def __repr__(self) -> str:
-        print("\n\tDNSText __repr__\n")
+        # print("\n\tDNSText __repr__\n")
         """String representation"""
         if len(self.text) > 10:
             return self.to_string(self.text[:7]) + "..."
@@ -490,7 +490,7 @@ class DNSService(DNSRecord):
         server: str,
         created: Optional[float] = None,
     ) -> None:
-        print("\n\tDNSService __init__ DNSService\n")
+        # print("\n\tDNSService __init__ DNSService\n")
         super().__init__(name, type_, class_, ttl, created)
         self.priority = priority
         self.weight = weight
@@ -500,7 +500,7 @@ class DNSService(DNSRecord):
         self._hash = hash((self.key, type_, self.class_, priority, weight, port, self.server_key))
 
     def write(self, out: 'DNSOutgoing') -> None:
-        print("\n\tDNSService write\n")
+        # print("\n\tDNSService write\n")
         """Used in constructing an outgoing packet"""
         out.write_short(self.priority)
         out.write_short(self.weight)
@@ -508,12 +508,12 @@ class DNSService(DNSRecord):
         out.write_name(self.server)
 
     def __eq__(self, other: Any) -> bool:
-        print("\n\tDNSService __eq__\n")
+        # print("\n\tDNSService __eq__\n")
         """Tests equality on priority, weight, port and server"""
         return isinstance(other, DNSService) and self._eq(other)
 
     def _eq(self, other) -> bool:  # type: ignore[no-untyped-def]
-        print("\n\tDNSService _eq\n")
+        # print("\n\tDNSService _eq\n")
         """Tests equality on priority, weight, port and server."""
         return (
             self.priority == other.priority
@@ -524,12 +524,12 @@ class DNSService(DNSRecord):
         )
 
     def __hash__(self) -> int:
-        print("\n\tDNSService __hash__\n")
+        # print("\n\tDNSService __hash__\n")
         """Hash to compare like DNSService."""
         return self._hash
 
     def __repr__(self) -> str:
-        print("\n\tDNSService __repr__\n")
+        # print("\n\tDNSService __repr__\n")
         """String representation"""
         return self.to_string(f"{self.server}:{self.port}")
 
