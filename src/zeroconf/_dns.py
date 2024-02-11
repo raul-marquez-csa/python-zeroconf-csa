@@ -61,6 +61,22 @@ class DNSQuestionType(enum.Enum):
     QM = 2
 
 
+@enum.unique
+class DNSRecordType(enum.Enum):
+    """An MDNS record type.
+
+    "A" - A MDNS record type
+    "AAAA" - AAAA MDNS record type
+    "SRV" - SRV MDNS record type
+    "TXT" - TXT MDNS record type
+    """
+
+    A = 0
+    AAAA = 1
+    SRV = 2
+    TXT = 3
+
+
 class DNSEntry:
 
     """A DNS entry"""

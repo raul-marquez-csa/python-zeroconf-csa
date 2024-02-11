@@ -36,6 +36,7 @@ from .._dns import (
     DNSRecord,
     DNSService,
     DNSText,
+    DNSRecordType
 )
 from .._exceptions import BadTypeInNameException
 from .._history import QuestionHistory
@@ -882,7 +883,7 @@ class ServiceInfo(RecordUpdateListener):
             out.add_answer_at_time(answer, now)
 
     def _generate_request_query(
-        self, zc: 'Zeroconf', now: float_, question_type: DNSQuestionType
+        self, zc: 'Zeroconf', now: float_, question_type: DNSQuestionType, record_type: DNSRecordType
     ) -> DNSOutgoing:
         """Generate the request query."""
         out = DNSOutgoing(_FLAGS_QR_QUERY)
@@ -891,18 +892,26 @@ class ServiceInfo(RecordUpdateListener):
         cache = zc.cache
         history = zc.question_history
         qu_question = question_type is QU_QUESTION
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
-        )
+        if record_type is None or record_type is DNSRecordType.SRV:
+            print("Requesting MDNS SRV record...")
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
+            )
+        if record_type is None or record_type is DNSRecordType.TXT:
+            print("Requesting MDNS TXT record...")
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
+            )
+        if record_type is None or record_type is DNSRecordType.A:
+            print("Requesting MDNS A record...")
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
+            )
+        if record_type is None or record_type is DNSRecordType.AAAA:
+            print("Requesting MDNS AAAA record...")
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
+            )
         return out
 
     def __repr__(self) -> str:
