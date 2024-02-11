@@ -119,6 +119,7 @@ class DNSIncoming:
         self.scope_id = scope_id
         self._has_qu_question = False
         try:
+            print(f"\n\t\t\t\tINCOMING DATA: {self.data}\n")
             self._initial_parse()
         except DECODE_EXCEPTIONS:
             self._log_exception_debug(
