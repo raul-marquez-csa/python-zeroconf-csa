@@ -146,7 +146,6 @@ class DNSOutgoing:
         )
 
     def add_question(self, record: DNSQuestion) -> None:
-        print(f"\n\t PTRRRR DNSOutgoing add_question {record}\n")
         """Adds a question"""
         self.questions.append(record)
 

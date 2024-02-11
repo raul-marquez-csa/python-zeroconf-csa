@@ -89,7 +89,6 @@ def construct_outgoing_multicast_answers(answers: _AnswerWithAdditionalsType) ->
 def construct_outgoing_unicast_answers(
     answers: _AnswerWithAdditionalsType, ucast_source: bool, questions: List[DNSQuestion], id_: int_
 ) -> DNSOutgoing:
-    print(f" PTRRRR construct_outgoing_unicast_answers")
     """Add answers and additionals to a DNSOutgoing."""
     out = DNSOutgoing(_FLAGS_QR_RESPONSE_AA, False, id_)
     # Adding the questions back when the source is legacy unicast behavior

@@ -868,7 +868,6 @@ class ServiceInfo(RecordUpdateListener):
         class_: int_,
         skip_if_known_answers: bool,
     ) -> None:
-        print(f"PTRRRR _add_question_with_known_answers")
         """Add a question with known answers if its not suppressed."""
         known_answers = {
             answer for answer in cache.get_all_by_details(name, type_, class_) if not answer.is_stale(now)
