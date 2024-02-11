@@ -832,6 +832,10 @@ class ServiceInfo(RecordUpdateListener):
                 if next_ <= now:
                     this_question_type = question_type or QU_QUESTION if first_request else QM_QUESTION
                     out = self._generate_request_query(zc, now, this_question_type, record_type)
+                    
+                    print(f"\n\n\t\t\t\t_generate_request_query: {out}\n\n")
+                    
+                    
                     first_request = False
                     if out.questions:
                         # All questions may have been suppressed
