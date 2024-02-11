@@ -868,6 +868,7 @@ class ServiceInfo(RecordUpdateListener):
         class_: int_,
         skip_if_known_answers: bool,
     ) -> None:
+        print(f"PTRRRR _add_question_with_known_answers")
         """Add a question with known answers if its not suppressed."""
         known_answers = {
             answer for answer in cache.get_all_by_details(name, type_, class_) if not answer.is_stale(now)
@@ -875,9 +876,6 @@ class ServiceInfo(RecordUpdateListener):
         if skip_if_known_answers and known_answers:
             return
         question = DNSQuestion(name, type_, class_)
-        
-        print(f"\n\n\n\t\t\t\ _add_question_with_known_answers: {question}\n\n")
-        
         if qu_question:
             question.unicast = True
         elif question_history.suppresses(question, now, known_answers):
