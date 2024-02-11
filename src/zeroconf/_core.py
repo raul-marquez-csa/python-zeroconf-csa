@@ -108,6 +108,7 @@ def async_send_with_transport(
     port: int,
     v6_flow_scope: Union[Tuple[()], Tuple[int, int]] = (),
 ) -> None:
+    print("\n\tasync_send_with_transport\n")
     ipv6_socket = transport.is_ipv6
     if addr is None:
         real_addr = _MDNS_ADDR6 if ipv6_socket else _MDNS_ADDR
@@ -149,6 +150,7 @@ class Zeroconf(QuietLogger):
         ip_version: Optional[IPVersion] = None,
         apple_p2p: bool = False,
     ) -> None:
+        print("\n\t__init__ Zeroconf\n")
         """Creates an instance of the Zeroconf class, establishing
         multicast communications, listening and reaping threads.
 
@@ -197,10 +199,12 @@ class Zeroconf(QuietLogger):
 
     @property
     def started(self) -> bool:
+        print("\n\tstarted Zeroconf\n")
         """Check if the instance has started."""
         return bool(not self.done and self.engine.running_event and self.engine.running_event.is_set())
 
     def start(self) -> None:
+        print("\n\tstart Zeroconf\n")
         """Start Zeroconf."""
         self.loop = get_running_loop()
         if self.loop:
@@ -209,10 +213,12 @@ class Zeroconf(QuietLogger):
         self._start_thread()
 
     def _start_thread(self) -> None:
+        print("\n\t_start_thread Zeroconf\n")
         """Start a thread with a running event loop."""
         loop_thread_ready = threading.Event()
 
         def _run_loop() -> None:
+            print("\n\t_run_loop Zeroconf\n")
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
             self.engine.setup(self.loop, loop_thread_ready)
@@ -223,6 +229,7 @@ class Zeroconf(QuietLogger):
         loop_thread_ready.wait()
 
     async def async_wait_for_start(self) -> None:
+        print("\n\tasync_wait_for_start Zeroconf\n")
         """Wait for start up for actions that require a running Zeroconf instance.
 
         Throws NotRunningException if the instance is not running or could
@@ -237,20 +244,24 @@ class Zeroconf(QuietLogger):
 
     @property
     def listeners(self) -> Set[RecordUpdateListener]:
+        print("\n\tlisteners Zeroconf\n")
         return self.record_manager.listeners
 
     async def async_wait(self, timeout: float) -> None:
+        print("\n\tasync_wait Zeroconf\n")
         """Calling task waits for a given number of milliseconds or until notified."""
         loop = self.loop
         assert loop is not None
         await wait_for_future_set_or_timeout(loop, self._notify_futures, timeout)
 
     def notify_all(self) -> None:
+        print("\n\tnotify_all Zeroconf\n")
         """Notifies all waiting threads and notify listeners."""
         assert self.loop is not None
         self.loop.call_soon_threadsafe(self.async_notify_all)
 
     def async_notify_all(self) -> None:
+        print("\n\tasync_notify_all Zeroconf\n")
         """Schedule an async_notify_all."""
         notify_futures = self._notify_futures
         if notify_futures:
@@ -259,6 +270,7 @@ class Zeroconf(QuietLogger):
     def get_service_info(
         self, type_: str, name: str, timeout: int = 3000, question_type: Optional[DNSQuestionType] = None
     ) -> Optional[ServiceInfo]:
+        print("\n\tget_service_info Zeroconf\n")
         """Returns network's service information for a particular
         name and type, or None if no service matches by the timeout,
         which defaults to 3 seconds."""
@@ -268,6 +280,7 @@ class Zeroconf(QuietLogger):
         return None
 
     def add_service_listener(self, type_: str, listener: ServiceListener) -> None:
+        print("\n\tadd_service_listener Zeroconf\n")
         """Adds a listener for a particular service type.  This object
         will then have its add_service and remove_service methods called when
         services of that type become available and unavailable."""
@@ -275,12 +288,14 @@ class Zeroconf(QuietLogger):
         self.browsers[listener] = ServiceBrowser(self, type_, listener)
 
     def remove_service_listener(self, listener: ServiceListener) -> None:
+        print("\n\tremove_service_listener Zeroconf\n")
         """Removes a listener from the set that is currently listening."""
         if listener in self.browsers:
             self.browsers[listener].cancel()
             del self.browsers[listener]
 
     def remove_all_service_listeners(self) -> None:
+        print("\n\tremove_all_service_listeners Zeroconf\n")
         """Removes a listener from the set that is currently listening."""
         for listener in list(self.browsers):
             self.remove_service_listener(listener)
@@ -293,6 +308,7 @@ class Zeroconf(QuietLogger):
         cooperating_responders: bool = False,
         strict: bool = True,
     ) -> None:
+        print("\n\tregister_service Zeroconf\n")
         """Registers service information to the network with a default TTL.
         Zeroconf will then respond to requests for information for that
         service.  The name of the service may be changed if needed to make
@@ -321,6 +337,7 @@ class Zeroconf(QuietLogger):
         cooperating_responders: bool = False,
         strict: bool = True,
     ) -> Awaitable:
+        print("\n\tasync_register_service Zeroconf\n")
         """Registers service information to the network with a default TTL.
         Zeroconf will then respond to requests for information for that
         service.  The name of the service may be changed if needed to make
@@ -340,6 +357,7 @@ class Zeroconf(QuietLogger):
         return asyncio.ensure_future(self._async_broadcast_service(info, _REGISTER_TIME, None))
 
     def update_service(self, info: ServiceInfo) -> None:
+        print("\n\tupdate_service Zeroconf\n")
         """Registers service information to the network with a default TTL.
         Zeroconf will then respond to requests for information for that
         service.
@@ -354,6 +372,7 @@ class Zeroconf(QuietLogger):
         )
 
     async def async_update_service(self, info: ServiceInfo) -> Awaitable:
+        print("\n\tasync_update_service Zeroconf\n")
         """Registers service information to the network with a default TTL.
         Zeroconf will then respond to requests for information for that
         service."""
@@ -367,6 +386,7 @@ class Zeroconf(QuietLogger):
         ttl: Optional[int],
         broadcast_addresses: bool = True,
     ) -> None:
+        print("\n\t_async_broadcast_service Zeroconf\n")
         """Send a broadcasts to announce a service at intervals."""
         for i in range(_REGISTER_BROADCASTS):
             if i != 0:
@@ -379,12 +399,14 @@ class Zeroconf(QuietLogger):
         ttl: Optional[int],
         broadcast_addresses: bool = True,
     ) -> DNSOutgoing:
+        print("\n\tgenerate_service_broadcast Zeroconf\n")
         """Generate a broadcast to announce a service."""
         out = DNSOutgoing(_FLAGS_QR_RESPONSE | _FLAGS_AA)
         self._add_broadcast_answer(out, info, ttl, broadcast_addresses)
         return out
 
     def generate_service_query(self, info: ServiceInfo) -> DNSOutgoing:  # pylint: disable=no-self-use
+        print("\n\tgenerate_service_query Zeroconf\n")
         """Generate a query to lookup a service."""
         out = DNSOutgoing(_FLAGS_QR_QUERY | _FLAGS_AA)
         # https://datatracker.ietf.org/doc/html/rfc6762#section-8.1
@@ -406,6 +428,7 @@ class Zeroconf(QuietLogger):
         override_ttl: Optional[int],
         broadcast_addresses: bool = True,
     ) -> None:
+        print("\n\t_add_broadcast_answer Zeroconf\n")
         """Add answers to broadcast a service."""
         current_time_millis()
         other_ttl = None if override_ttl is None else override_ttl
@@ -418,6 +441,7 @@ class Zeroconf(QuietLogger):
                 out.add_answer_at_time(record, 0)
 
     def unregister_service(self, info: ServiceInfo) -> None:
+        print("\n\tunregister_service Zeroconf\n")
         """Unregister a service.
 
         While it is not expected during normal operation,
@@ -430,6 +454,7 @@ class Zeroconf(QuietLogger):
         )
 
     async def async_unregister_service(self, info: ServiceInfo) -> Awaitable:
+        print("\n\tasync_unregister_service Zeroconf\n")
         """Unregister a service."""
         info.set_server_if_missing()
         self.registry.async_remove(info)
@@ -444,6 +469,7 @@ class Zeroconf(QuietLogger):
         )
 
     def generate_unregister_all_services(self) -> Optional[DNSOutgoing]:
+        print("\n\tgenerate_unregister_all_services Zeroconf\n")
         """Generate a DNSOutgoing goodbye for all services and remove them from the registry."""
         service_infos = self.registry.async_get_service_infos()
         if not service_infos:
@@ -455,6 +481,7 @@ class Zeroconf(QuietLogger):
         return out
 
     async def async_unregister_all_services(self) -> None:
+        print("\n\tasync_unregister_all_services Zeroconf\n")
         """Unregister all registered services.
 
         Unlike async_register_service and async_unregister_service, this
@@ -471,6 +498,7 @@ class Zeroconf(QuietLogger):
             self.async_send(out)
 
     def unregister_all_services(self) -> None:
+        print("\n\tunregister_all_services Zeroconf\n")
         """Unregister all registered services.
 
         While it is not expected during normal operation,
@@ -489,6 +517,7 @@ class Zeroconf(QuietLogger):
         cooperating_responders: bool = False,
         strict: bool = True,
     ) -> None:
+        print("\n\tasync_check_service Zeroconf\n")
         """Checks the network for a unique service name, modifying the
         ServiceInfo passed in if it is not unique."""
         instance_name = instance_name_from_service_info(info, strict=strict)
@@ -522,6 +551,7 @@ class Zeroconf(QuietLogger):
     def add_listener(
         self, listener: RecordUpdateListener, question: Optional[Union[DNSQuestion, List[DNSQuestion]]]
     ) -> None:
+        print("\n\tadd_listener Zeroconf\n")
         """Adds a listener for a given question.  The listener will have
         its update_record method called when information is available to
         answer the question(s).
@@ -532,6 +562,7 @@ class Zeroconf(QuietLogger):
         self.loop.call_soon_threadsafe(self.record_manager.async_add_listener, listener, question)
 
     def remove_listener(self, listener: RecordUpdateListener) -> None:
+        print("\n\tremove_listener Zeroconf\n")
         """Removes a listener.
 
         This function is threadsafe
@@ -542,6 +573,7 @@ class Zeroconf(QuietLogger):
     def async_add_listener(
         self, listener: RecordUpdateListener, question: Optional[Union[DNSQuestion, List[DNSQuestion]]]
     ) -> None:
+        print("\n\tasync_add_listener Zeroconf\n")
         """Adds a listener for a given question.  The listener will have
         its update_record method called when information is available to
         answer the question(s).
@@ -551,6 +583,7 @@ class Zeroconf(QuietLogger):
         self.record_manager.async_add_listener(listener, question)
 
     def async_remove_listener(self, listener: RecordUpdateListener) -> None:
+        print("\n\tasync_remove_listener Zeroconf\n")
         """Removes a listener.
 
         This function is not threadsafe and must be called in the eventloop.
@@ -565,6 +598,7 @@ class Zeroconf(QuietLogger):
         v6_flow_scope: Union[Tuple[()], Tuple[int, int]] = (),
         transport: Optional[_WrappedTransport] = None,
     ) -> None:
+        print("\n\tsend Zeroconf\n")
         """Sends an outgoing packet threadsafe."""
         assert self.loop is not None
         self.loop.call_soon_threadsafe(self.async_send, out, addr, port, v6_flow_scope, transport)
@@ -577,6 +611,7 @@ class Zeroconf(QuietLogger):
         v6_flow_scope: Union[Tuple[()], Tuple[int, int]] = (),
         transport: Optional[_WrappedTransport] = None,
     ) -> None:
+        print("\n\tasync_send Zeroconf\n")
         """Sends an outgoing packet."""
         if self.done:
             return
@@ -596,6 +631,7 @@ class Zeroconf(QuietLogger):
                 )
 
     def _close(self) -> None:
+        print("\n\t_close Zeroconf\n")
         """Set global done and remove all service listeners."""
         if self.done:
             return
@@ -603,6 +639,7 @@ class Zeroconf(QuietLogger):
         self.done = True
 
     def _shutdown_threads(self) -> None:
+        print("\n\t_shutdown_threads Zeroconf\n")
         """Shutdown any threads."""
         self.notify_all()
         if not self._loop_thread:
@@ -613,6 +650,7 @@ class Zeroconf(QuietLogger):
         self._loop_thread = None
 
     def close(self) -> None:
+        print("\n\tclose Zeroconf\n")
         """Ends the background threads, and prevent this instance from
         servicing further queries.
 
@@ -631,6 +669,7 @@ class Zeroconf(QuietLogger):
         self._shutdown_threads()
 
     async def _async_close(self) -> None:
+        print("\n\t_async_close Zeroconf\n")
         """Ends the background threads, and prevent this instance from
         servicing further queries.
 
@@ -646,6 +685,7 @@ class Zeroconf(QuietLogger):
         self._shutdown_threads()
 
     def __enter__(self) -> 'Zeroconf':
+        print("\n\t__enter__ Zeroconf\n")
         return self
 
     def __exit__(  # pylint: disable=useless-return
@@ -654,5 +694,6 @@ class Zeroconf(QuietLogger):
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> Optional[bool]:
+        print("\n\t__exit__ Zeroconf\n")
         self.close()
         return None
