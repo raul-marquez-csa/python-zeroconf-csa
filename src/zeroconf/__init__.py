@@ -35,6 +35,7 @@ from ._dns import (  # noqa # import needed for backwards compat
     DNSRecord,
     DNSService,
     DNSText,
+    DNSRecordType
 )
 from ._exceptions import (
     AbstractMethodException,
