@@ -408,7 +408,7 @@ class Zeroconf(QuietLogger):
         return out
 
     def generate_service_query(self, info: ServiceInfo) -> DNSOutgoing:  # pylint: disable=no-self-use
-        # print("\n\tgenerate_service_query Zeroconf\n")
+        print("\n\tgenerate_service_query Zeroconf\n")
         """Generate a query to lookup a service."""
         out = DNSOutgoing(_FLAGS_QR_QUERY | _FLAGS_AA)
         # https://datatracker.ietf.org/doc/html/rfc6762#section-8.1
@@ -546,7 +546,7 @@ class Zeroconf(QuietLogger):
                 now = current_time_millis()
                 continue
 
-            # self.async_send(self.generate_service_query(info))
+            self.async_send(self.generate_service_query(info))
             i += 1
             next_time += _CHECK_TIME
 
