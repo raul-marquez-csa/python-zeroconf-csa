@@ -195,6 +195,7 @@ class DNSOutgoing:
            o  All address records (type "A" and "AAAA") named in the SRV rdata.
 
         """
+        print(f"\n\n\tadiixi: {record.to_string()}\n\n")
         self.additionals.append(record)
 
     def _write_byte(self, value: int_) -> None:
