@@ -188,7 +188,7 @@ class _DNSPointerOutgoingBucket:
 
     def add(self, max_compressed_size: int_, question: DNSQuestion, answers: Set[DNSPointer]) -> None:
         """Add a new set of questions and known answers to the outgoing."""
-        print(f"PTRRRR add")
+        print(f"PTRRRR add {question}")
         self.out.add_question(question)
         for answer in answers:
             self.out.add_answer_at_time(answer, self.now_millis)
