@@ -807,6 +807,7 @@ class ServiceInfo(RecordUpdateListener):
         requests to a specific host that may be able to respond across
         subnets.
         """
+        print("async_request")
         if not zc.started:
             await zc.async_wait_for_start()
 
@@ -895,22 +896,22 @@ class ServiceInfo(RecordUpdateListener):
         history = zc.question_history
         qu_question = question_type is QU_QUESTION
         if record_type is None or record_type is DNSRecordType.SRV:
-            log.info("Requesting MDNS SRV record...")
+            print("Requesting MDNS SRV record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
             )
         if record_type is None or record_type is DNSRecordType.TXT:
-            log.info("Requesting MDNS TXT record...")
+            print("Requesting MDNS TXT record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
             )
         if record_type is None or record_type is DNSRecordType.A:
-            log.info("Requesting MDNS A record...")
+            print("Requesting MDNS A record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
             )
         if record_type is None or record_type is DNSRecordType.AAAA:
-            log.info("Requesting MDNS AAAA record...")
+            print("Requesting MDNS AAAA record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
             )
