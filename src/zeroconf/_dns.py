@@ -27,7 +27,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union, cast
 from ._exceptions import AbstractMethodException
 from ._utils.net import _is_v6_address
 from ._utils.time import current_time_millis
-from .const import _CLASS_MASK, _CLASS_UNIQUE, _CLASSES, _TYPE_ANY, _TYPES
+from .const import (_CLASS_MASK, _CLASS_UNIQUE, _CLASSES, _TYPE_ANY, _TYPES,
+_TYPE_AAAA, _TYPE_PTR, _TYPE_SRV, _TYPE_TXT)
 
 _LEN_BYTE = 1
 _LEN_SHORT = 2
@@ -59,6 +60,22 @@ class DNSQuestionType(enum.Enum):
 
     QU = 1
     QM = 2
+
+
+@enum.unique
+class DNSRecordType(enum.Enum):
+    """An MDNS record type.
+
+    "AAAA" - AAAA MDNS record type
+    "PTR" - PTR MDNS record type
+    "SRV" - SRV MDNS record type
+    "TXT" - TXT MDNS record type
+    """
+
+    AAAA = _TYPE_AAAA
+    PTR = _TYPE_PTR
+    SRV = _TYPE_SRV
+    TXT = _TYPE_TXT
 
 
 class DNSEntry:
