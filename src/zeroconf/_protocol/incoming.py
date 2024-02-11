@@ -325,12 +325,15 @@ class DNSIncoming:
     ) -> Optional[DNSRecord]:
         print("\n\t\t\t_read_record DNSIncoming")
         """Read known records types and skip unknown ones."""
+        
+        record: DNSRecord = None
+        
         if type_ == _TYPE_A:
-            return DNSAddress(domain, type_, class_, ttl, self._read_string(4), None, self.now)
+            record = DNSAddress(domain, type_, class_, ttl, self._read_string(4), None, self.now)
         if type_ in (_TYPE_CNAME, _TYPE_PTR):
-            return DNSPointer(domain, type_, class_, ttl, self._read_name(), self.now)
+            record = DNSPointer(domain, type_, class_, ttl, self._read_name(), self.now)
         if type_ == _TYPE_TXT:
-            return DNSText(domain, type_, class_, ttl, self._read_string(length), self.now)
+            record = DNSText(domain, type_, class_, ttl, self._read_string(length), self.now)
         if type_ == _TYPE_SRV:
             view = self.view
             offset = self.offset
@@ -339,7 +342,7 @@ class DNSIncoming:
             priority = view[offset] << 8 | view[offset + 1]
             weight = view[offset + 2] << 8 | view[offset + 3]
             port = view[offset + 4] << 8 | view[offset + 5]
-            return DNSService(
+            record = DNSService(
                 domain,
                 type_,
                 class_,
@@ -351,7 +354,7 @@ class DNSIncoming:
                 self.now,
             )
         if type_ == _TYPE_HINFO:
-            return DNSHinfo(
+            record = DNSHinfo(
                 domain,
                 type_,
                 class_,
@@ -361,10 +364,10 @@ class DNSIncoming:
                 self.now,
             )
         if type_ == _TYPE_AAAA:
-            return DNSAddress(domain, type_, class_, ttl, self._read_string(16), self.scope_id, self.now)
+            record = DNSAddress(domain, type_, class_, ttl, self._read_string(16), self.scope_id, self.now)
         if type_ == _TYPE_NSEC:
             name_start = self.offset
-            return DNSNsec(
+            record = DNSNsec(
                 domain,
                 type_,
                 class_,
@@ -377,7 +380,9 @@ class DNSIncoming:
         # Skip the payload for the resource record so the next
         # records can be parsed correctly
         self.offset += length
-        return None
+        # return None
+        print(f"\n\t\t\tRESPOT: {record}\n")
+        return record
 
     def _read_bitmap(self, end: _int) -> List[int]:
         print("\n\t\t\t_read_bitmap DNSIncoming")
