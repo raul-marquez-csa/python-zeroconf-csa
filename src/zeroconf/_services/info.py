@@ -794,7 +794,8 @@ class ServiceInfo(RecordUpdateListener):
         question_type: Optional[DNSQuestionType] = None,
         addr: Optional[str] = None,
         port: int = _MDNS_PORT,
-        record_type: DNSRecordType = None
+        record_type: DNSRecordType = None,
+        load_from_cache: bool = False
     ) -> bool:
         """Returns true if the service could be discovered on the
         network, and updates this object with details discovered.
@@ -811,7 +812,7 @@ class ServiceInfo(RecordUpdateListener):
 
         now = current_time_millis()
 
-        if self._load_from_cache(zc, now):
+        if self._load_from_cache(zc, now) and load_from_cache:
             return True
 
         if TYPE_CHECKING:
@@ -894,18 +895,22 @@ class ServiceInfo(RecordUpdateListener):
         history = zc.question_history
         qu_question = question_type is QU_QUESTION
         if record_type is None or record_type is DNSRecordType.SRV:
+            log.info("Requesting MDNS SRV record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
             )
         if record_type is None or record_type is DNSRecordType.TXT:
+            log.info("Requesting MDNS TXT record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
             )
         if record_type is None or record_type is DNSRecordType.A:
+            log.info("Requesting MDNS A record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
             )
         if record_type is None or record_type is DNSRecordType.AAAA:
+            log.info("Requesting MDNS AAAA record...")
             self._add_question_with_known_answers(
                 out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
             )
