@@ -91,7 +91,6 @@ def construct_outgoing_unicast_answers(
 ) -> DNSOutgoing:
     """Add answers and additionals to a DNSOutgoing."""
     out = DNSOutgoing(_FLAGS_QR_RESPONSE_AA, False, id_)
-    print(f"\n\n\n\tconstruct_outgoing_unicast_answers out {out}\n\n")
     # Adding the questions back when the source is legacy unicast behavior
     if ucast_source:
         for question in questions:

@@ -875,6 +875,9 @@ class ServiceInfo(RecordUpdateListener):
         if skip_if_known_answers and known_answers:
             return
         question = DNSQuestion(name, type_, class_)
+        
+        print(f"\n\n\n\t\t\t\ _add_question_with_known_answers: {question}\n\n")
+        
         if qu_question:
             question.unicast = True
         elif question_history.suppresses(question, now, known_answers):
