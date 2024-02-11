@@ -206,7 +206,8 @@ def group_ptr_queries_with_known_answers(
     so we try to keep all the known answers in the same packet as the
     questions.
     """
-    return _group_ptr_queries_with_known_answers(now, multicast, question_with_known_answers)
+    return None
+    # return _group_ptr_queries_with_known_answers(now, multicast, question_with_known_answers)
 
 
 def _group_ptr_queries_with_known_answers(
