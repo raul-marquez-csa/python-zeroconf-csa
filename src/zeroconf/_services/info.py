@@ -36,6 +36,7 @@ from .._dns import (
     DNSRecord,
     DNSService,
     DNSText,
+    DNSRecordType
 )
 from .._exceptions import BadTypeInNameException
 from .._history import QuestionHistory
@@ -793,6 +794,7 @@ class ServiceInfo(RecordUpdateListener):
         question_type: Optional[DNSQuestionType] = None,
         addr: Optional[str] = None,
         port: int = _MDNS_PORT,
+        record_type: DNSRecordType = None
     ) -> bool:
         """Returns true if the service could be discovered on the
         network, and updates this object with details discovered.
@@ -826,7 +828,7 @@ class ServiceInfo(RecordUpdateListener):
                     return False
                 if next_ <= now:
                     this_question_type = question_type or QU_QUESTION if first_request else QM_QUESTION
-                    out = self._generate_request_query(zc, now, this_question_type)
+                    out = self._generate_request_query(zc, now, this_question_type, record_type)
                     first_request = False
                     if out.questions:
                         # All questions may have been suppressed
@@ -882,7 +884,7 @@ class ServiceInfo(RecordUpdateListener):
             out.add_answer_at_time(answer, now)
 
     def _generate_request_query(
-        self, zc: 'Zeroconf', now: float_, question_type: DNSQuestionType
+        self, zc: 'Zeroconf', now: float_, question_type: DNSQuestionType, record_type: DNSRecordType
     ) -> DNSOutgoing:
         """Generate the request query."""
         out = DNSOutgoing(_FLAGS_QR_QUERY)
@@ -891,18 +893,22 @@ class ServiceInfo(RecordUpdateListener):
         cache = zc.cache
         history = zc.question_history
         qu_question = question_type is QU_QUESTION
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
-        )
+        if record_type is None or record_type is DNSRecordType.SRV:
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
+            )
+        if record_type is None or record_type is DNSRecordType.TXT:
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
+            )
+        if record_type is None or record_type is DNSRecordType.A:
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
+            )
+        if record_type is None or record_type is DNSRecordType.AAAA:
+            self._add_question_with_known_answers(
+                out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
+            )
         return out
 
     def __repr__(self) -> str:
