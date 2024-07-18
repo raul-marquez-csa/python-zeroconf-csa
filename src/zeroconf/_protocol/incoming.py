@@ -99,6 +99,7 @@ class DNSIncoming:
         now: Optional[float] = None,
     ) -> None:
         """Constructor from string holding bytes of packet"""
+        print(f"DNSIncoming - __init__, data: {data}, source: {source}, scope_id: {scope_id}, now: {now}")
         self.flags = 0
         self.offset = 0
         self.data = data
@@ -130,48 +131,58 @@ class DNSIncoming:
 
     def is_query(self) -> bool:
         """Returns true if this is a query."""
+        print("DNSIncoming - is_query")
         return (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_QUERY
 
     def is_response(self) -> bool:
         """Returns true if this is a response."""
+        print("DNSIncoming - is_response")
         return (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_RESPONSE
 
     def has_qu_question(self) -> bool:
         """Returns true if any question is a QU question."""
+        print("DNSIncoming - has_qu_question")
         return self._has_qu_question
 
     @property
     def truncated(self) -> bool:
         """Returns true if this is a truncated."""
+        print("DNSIncoming - truncated")
         return (self.flags & _FLAGS_TC) == _FLAGS_TC
 
     @property
     def questions(self) -> List[DNSQuestion]:
         """Questions in the packet."""
+        print("DNSIncoming - questions")
         return self._questions
 
     @property
     def num_questions(self) -> int:
         """Number of questions in the packet."""
+        print("DNSIncoming - num_questions")
         return self._num_questions
 
     @property
     def num_answers(self) -> int:
         """Number of answers in the packet."""
+        print("DNSIncoming - num_answers")
         return self._num_answers
 
     @property
     def num_authorities(self) -> int:
         """Number of authorities in the packet."""
+        print("DNSIncoming - num_authorities")
         return self._num_authorities
 
     @property
     def num_additionals(self) -> int:
         """Number of additionals in the packet."""
+        print("DNSIncoming - num_additionals")
         return self._num_additionals
 
     def _initial_parse(self) -> None:
         """Parse the data needed to initalize the packet object."""
+        print("DNSIncoming - _initial_parse")
         self._read_header()
         self._read_questions()
         if not self._num_questions:
@@ -180,17 +191,18 @@ class DNSIncoming:
 
     @classmethod
     def _log_exception_debug(cls, *logger_data: Any) -> None:
+        print(f"DNSIncoming - _log_exception_debug, logger_data: {logger_data}")
         log_exc_info = False
         exc_info = sys.exc_info()
         exc_str = str(exc_info[1])
         if exc_str not in _seen_logs:
-            # log the trace only on the first time
             _seen_logs[exc_str] = exc_info
             log_exc_info = True
         log.debug(*(logger_data or ["Exception occurred"]), exc_info=log_exc_info)
 
     def answers(self) -> List[DNSRecord]:
         """Answers in the packet."""
+        print("DNSIncoming - answers")
         if not self._did_read_others:
             try:
                 self._read_others()
@@ -205,6 +217,7 @@ class DNSIncoming:
 
     def is_probe(self) -> bool:
         """Returns true if this is a probe."""
+        print("DNSIncoming - is_probe")
         return self._num_authorities > 0
 
     def __repr__(self) -> str:
@@ -224,10 +237,10 @@ class DNSIncoming:
 
     def _read_header(self) -> None:
         """Reads header portion of packet"""
+        print("DNSIncoming - _read_header")
         view = self.view
         offset = self.offset
         self.offset += 12
-        # The header has 6 unsigned shorts in network order
         self.id = view[offset] << 8 | view[offset + 1]
         self.flags = view[offset + 2] << 8 | view[offset + 3]
         self._num_questions = view[offset + 4] << 8 | view[offset + 5]
@@ -237,13 +250,13 @@ class DNSIncoming:
 
     def _read_questions(self) -> None:
         """Reads questions section of packet"""
+        print("DNSIncoming - _read_questions")
         view = self.view
         questions = self._questions
         for _ in range(self._num_questions):
             name = self._read_name()
             offset = self.offset
             self.offset += 4
-            # The question has 2 unsigned shorts in network order
             type_ = view[offset] << 8 | view[offset + 1]
             class_ = view[offset + 2] << 8 | view[offset + 3]
             question = DNSQuestion(name, type_, class_)
@@ -253,6 +266,7 @@ class DNSIncoming:
 
     def _read_character_string(self) -> str:
         """Reads a character string from the packet"""
+        print("DNSIncoming - _read_character_string")
         length = self.view[self.offset]
         self.offset += 1
         info = self.data[self.offset : self.offset + length].decode("utf-8", "replace")
@@ -261,13 +275,14 @@ class DNSIncoming:
 
     def _read_string(self, length: _int) -> bytes:
         """Reads a string of a given length from the packet"""
+        print(f"DNSIncoming - _read_string, length: {length}")
         info = self.data[self.offset : self.offset + length]
         self.offset += length
         return info
 
     def _read_others(self) -> None:
-        """Reads the answers, authorities and additionals section of the
-        packet"""
+        """Reads the answers, authorities and additionals section of the packet"""
+        print("DNSIncoming - _read_others")
         self._did_read_others = True
         view = self.view
         n = self._num_answers + self._num_authorities + self._num_additionals
@@ -310,6 +325,7 @@ class DNSIncoming:
         self, domain: _str, type_: _int, class_: _int, ttl: _int, length: _int
     ) -> Optional[DNSRecord]:
         """Read known records types and skip unknown ones."""
+        print(f"DNSIncoming - _read_record, domain: {domain}, type_: {type_}, class_: {class_}, ttl: {ttl}, length: {length}")
         if type_ == _TYPE_A:
             return DNSAddress(
                 domain, type_, class_, ttl, self._read_string(4), None, self.now
@@ -378,6 +394,7 @@ class DNSIncoming:
 
     def _read_bitmap(self, end: _int) -> List[int]:
         """Reads an NSEC bitmap from the packet."""
+        print(f"DNSIncoming - _read_bitmap, end: {end}")
         rdtypes = []
         view = self.view
         while self.offset < end:
@@ -396,6 +413,7 @@ class DNSIncoming:
 
     def _read_name(self) -> str:
         """Reads a domain name from the packet."""
+        print("DNSIncoming - _read_name")
         labels: List[str] = []
         seen_pointers: Set[int] = set()
         original_offset = self.offset
@@ -413,6 +431,7 @@ class DNSIncoming:
     def _decode_labels_at_offset(
         self, off: _int, labels: List[str], seen_pointers: Set[int]
     ) -> int:
+        print(f"DNSIncoming - _decode_labels_at_offset, off: {off}, labels: {labels}, seen_pointers: {seen_pointers}")
         # This is a tight loop that is called frequently, small optimizations can make a difference.
         view = self.view
         while off < self._data_len:

@@ -840,11 +840,13 @@ class ServiceInfo(RecordUpdateListener):
 
     async def async_request(
         self,
-        zc: "Zeroconf",
+        zc: 'Zeroconf',
         timeout: float,
         question_type: Optional[DNSQuestionType] = None,
         addr: Optional[str] = None,
         port: int = _MDNS_PORT,
+        record_type: DNSRecordType = None,
+        load_from_cache: bool = True
     ) -> bool:
         """Returns true if the service could be discovered on the
         network, and updates this object with details discovered.
@@ -855,20 +857,15 @@ class ServiceInfo(RecordUpdateListener):
         mDNS multicast address and port. This is useful for directing
         requests to a specific host that may be able to respond across
         subnets.
-
-        :param zc: Zeroconf instance
-        :param timeout: time in milliseconds to wait for a response
-        :param question_type: question type to ask
-        :param addr: address to send the request to
-        :param port: port to send the request to
         """
         if not zc.started:
             await zc.async_wait_for_start()
 
         now = current_time_millis()
 
-        if self._load_from_cache(zc, now):
-            return True
+        if load_from_cache:
+            if self._load_from_cache(zc, now):
+                return True
 
         if TYPE_CHECKING:
             assert zc.loop is not None
@@ -883,10 +880,11 @@ class ServiceInfo(RecordUpdateListener):
                 if last <= now:
                     return False
                 if next_ <= now:
-                    this_question_type = (
-                        question_type or QU_QUESTION if first_request else QM_QUESTION
-                    )
-                    out = self._generate_request_query(zc, now, this_question_type)
+                    this_question_type = question_type or QU_QUESTION if first_request else QM_QUESTION
+                    out: DNSOutgoing = self._generate_request_query(zc, now, this_question_type, record_type)
+                    
+                    print(f"\n\n\t\tout.__repr__(DNSOutgoing): {out.__repr__()}\n\n")
+                    
                     first_request = False
                     if out.questions:
                         # All questions may have been suppressed
@@ -897,10 +895,7 @@ class ServiceInfo(RecordUpdateListener):
                         zc.async_send(out, addr, port)
                     next_ = now + delay
                     next_ += self._get_random_delay()
-                    if (
-                        this_question_type is QM_QUESTION
-                        and delay < _DUPLICATE_QUESTION_INTERVAL
-                    ):
+                    if this_question_type is QM_QUESTION and delay < _DUPLICATE_QUESTION_INTERVAL:
                         # If we just asked a QM question, we need to
                         # wait at least the duplicate question interval
                         # before asking another QM question otherwise
@@ -915,59 +910,47 @@ class ServiceInfo(RecordUpdateListener):
 
         return True
 
-    def _add_question_with_known_answers(
+    def _add_question(
         self,
         out: DNSOutgoing,
         qu_question: bool,
-        question_history: QuestionHistory,
-        cache: DNSCache,
-        now: float_,
         name: str_,
         type_: int_,
-        class_: int_,
-        skip_if_known_answers: bool,
+        class_: int_
     ) -> None:
-        """Add a question with known answers if its not suppressed."""
-        known_answers = {
-            answer
-            for answer in cache.get_all_by_details(name, type_, class_)
-            if not answer.is_stale(now)
-        }
-        if skip_if_known_answers and known_answers:
-            return
+        """Add a question."""
         question = DNSQuestion(name, type_, class_)
-        if qu_question:
-            question.unicast = True
-        elif question_history.suppresses(question, now, known_answers):
-            return
-        else:
-            question_history.add_question_at_time(question, now, known_answers)
+        question.unicast = qu_question
         out.add_question(question)
-        for answer in known_answers:
-            out.add_answer_at_time(answer, now)
 
     def _generate_request_query(
-        self, zc: "Zeroconf", now: float_, question_type: DNSQuestionType
+        self, zc: 'Zeroconf', now: float_, question_type: DNSQuestionType, record_type: DNSRecordType
     ) -> DNSOutgoing:
         """Generate the request query."""
         out = DNSOutgoing(_FLAGS_QR_QUERY)
         name = self._name
         server = self.server or name
-        cache = zc.cache
-        history = zc.question_history
         qu_question = question_type is QU_QUESTION
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, name, _TYPE_SRV, _CLASS_IN, True
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, name, _TYPE_TXT, _CLASS_IN, True
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, server, _TYPE_A, _CLASS_IN, False
-        )
-        self._add_question_with_known_answers(
-            out, qu_question, history, cache, now, server, _TYPE_AAAA, _CLASS_IN, False
-        )
+        if record_type is None or record_type is DNSRecordType.SRV:
+            print("Requesting MDNS SRV record...")
+            self._add_question(
+                out, qu_question, server, _TYPE_SRV, _CLASS_IN
+            )
+        if record_type is None or record_type is DNSRecordType.TXT:
+            print("Requesting MDNS TXT record...")
+            self._add_question(
+                out, qu_question, server, _TYPE_TXT, _CLASS_IN
+            )
+        if record_type is None or record_type is DNSRecordType.A:
+            print("Requesting MDNS A record...")
+            self._add_question(
+                out, qu_question, server, _TYPE_A, _CLASS_IN
+            )
+        if record_type is None or record_type is DNSRecordType.AAAA:
+            print("Requesting MDNS AAAA record...")
+            self._add_question(
+                out, qu_question, server, _TYPE_AAAA, _CLASS_IN
+            )
         return out
 
     def __repr__(self) -> str:

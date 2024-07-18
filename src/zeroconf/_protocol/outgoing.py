@@ -113,22 +113,33 @@ class DNSOutgoing:
         self.authorities: List[DNSPointer] = []
         self.additionals: List[DNSRecord] = []
 
+        print(f"DNSOutgoing - multicast: {multicast}")
+        print(f"DNSOutgoing - self.questions: {self.questions}")
+        print(f"DNSOutgoing - self.answers: {self.answers}")
+        print(f"DNSOutgoing - self.authorities: {self.authorities}")
+        print(f"DNSOutgoing - self.additionals: {self.additionals}")
+
     def is_query(self) -> bool:
         """Returns true if this is a query."""
-        return (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_QUERY
+        is_query = (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_QUERY
+        print(f"\n\tDNSOutgoing - is_query: {is_query}\n")
+        return is_query
 
     def is_response(self) -> bool:
         """Returns true if this is a response."""
-        return (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_RESPONSE
+        is_response = (self.flags & _FLAGS_QR_MASK) == _FLAGS_QR_RESPONSE
+        print(f"\n\tDNSOutgoing - is_response: {is_response}\n")
+        return is_response
 
     def _reset_for_next_packet(self) -> None:
+        print("\n\t_reset_for_next_packet\n")
         self.names = {}
         self.data = []
         self.size = _DNS_PACKET_HEADER_LEN
         self.allow_long = True
 
     def __repr__(self) -> str:
-        return "<DNSOutgoing:{%s}>" % ", ".join(
+        string = "<DNSOutgoing:{%s}>" % ", ".join(
             [
                 "multicast=%s" % self.multicast,
                 "flags=%s" % self.flags,
@@ -138,15 +149,22 @@ class DNSOutgoing:
                 "additionals=%s" % self.additionals,
             ]
         )
+        print(f"\n\tDNSOutgoing - __repr__: {string}\n")
+        return string
 
     def add_question(self, record: DNSQuestion) -> None:
         """Adds a question"""
+        print(f"\n\tDNSOutgoing - adding a question: {record}\n")
         self.questions.append(record)
 
     def add_answer(self, inp: DNSIncoming, record: DNSRecord) -> None:
         """Adds an answer"""
+        print(f"\n\tDNSOutgoing - inc={inp}, rec={record}\n")
         if not record.suppressed_by(inp):
+            print(f"\n\tDNSOutgoing - adding an answer: inc={inp}, rec={record}\n")        
             self.add_answer_at_time(record, 0.0)
+        else:
+            print(f"\n\tDNSOutgoing - record suppressed by: {inp}\n")
 
     def add_answer_at_time(self, record: Optional[DNSRecord], now: float_) -> None:
         """Adds an answer if it does not expire by a certain time"""
@@ -154,9 +172,13 @@ class DNSOutgoing:
         if record is not None and (
             now_double == 0 or not record.is_expired(now_double)
         ):
+            print(f"\n\tDNSOutgoing - appending record {record}\n")
             self.answers.append((record, now))
+        else:
+            print(f"\n\tDNSOutgoing - record expired {record}\n")
 
     def add_authorative_answer(self, record: DNSPointer) -> None:
+        print(f"\n\tDNSOutgoing - adding authorative answer {record}\n")
         """Adds an authoritative answer"""
         self.authorities.append(record)
 
@@ -196,6 +218,7 @@ class DNSOutgoing:
            o  All address records (type "A" and "AAAA") named in the SRV rdata.
 
         """
+        print(f"\n\tDNSOutgoing - adding additional record {record}\n")
         self.additionals.append(record)
 
     def _write_byte(self, value: int_) -> None:
@@ -313,14 +336,21 @@ class DNSOutgoing:
         self.write_name(question.name)
         self.write_short(question.type)
         self._write_record_class(question)
-        return self._check_data_limit_or_rollback(start_data_length, start_size)
+
+        write = self._check_data_limit_or_rollback(start_data_length, start_size)
+
+        print(f"\n\tDNSOutgoing - _write_question: {write}, {question}")
+
+        return write
 
     def _write_record_class(self, record: Union[DNSQuestion_, DNSRecord_]) -> None:
         """Write out the record class including the unique/unicast (QU) bit."""
         class_ = record.class_
         if record.unique is True and self.multicast:
+            print(f"\n\tDNSOutgoing - _write_record_class unique and multicast")
             self.write_short(class_ | _CLASS_UNIQUE)
         else:
+            print(f"\n\tDNSOutgoing - _write_record_class")
             self.write_short(class_)
 
     def _write_ttl(self, record: DNSRecord_, now: float_) -> None:
@@ -347,7 +377,12 @@ class DNSOutgoing:
         # Here we replace the 0 length short we wrote
         # before with the actual length
         self._replace_short(index, length)
-        return self._check_data_limit_or_rollback(start_data_length, start_size)
+
+        write = self._check_data_limit_or_rollback(start_data_length, start_size)
+        
+        print(f"\n\tDNSOutgoing - write record to the packet {record}, {write}\n")
+
+        return write
 
     def _check_data_limit_or_rollback(
         self, start_data_length: int_, start_size: int_
@@ -382,6 +417,7 @@ class DNSOutgoing:
             if not self._write_question(question):
                 break
             questions_written += 1
+        print(f"\n\tDNSOutgoing - _write_questions_from_offset: {questions_written}")
         return questions_written
 
     def _write_answers_from_offset(self, answer_offset: int_) -> int:
@@ -390,6 +426,7 @@ class DNSOutgoing:
             if not self._write_record(answer, time_):
                 break
             answers_written += 1
+        print(f"\n\tDNSOutgoing - _write_answers_from_offset: {answers_written}")
         return answers_written
 
     def _write_records_from_offset(
@@ -400,6 +437,7 @@ class DNSOutgoing:
             if not self._write_record(record, 0):
                 break
             records_written += 1
+        print(f"\n\tDNSOutgoing - _write_records_from_offset: {records_written}, {records}")            
         return records_written
 
     def _has_more_to_add(
@@ -410,12 +448,14 @@ class DNSOutgoing:
         additional_offset: int_,
     ) -> bool:
         """Check if all questions, answers, authority, and additionals have been written to the packet."""
-        return (
+        has = (
             questions_offset < len(self.questions)
             or answer_offset < len(self.answers)
             or authority_offset < len(self.authorities)
             or additional_offset < len(self.additionals)
         )
+        print(f"\n\tDNSOutgoing - _has_more_to_add: {has}")            
+        return has
 
     def packets(self) -> List[bytes]:
         """Returns a list of bytestrings containing the packets' bytes

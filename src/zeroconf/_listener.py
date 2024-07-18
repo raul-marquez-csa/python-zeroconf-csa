@@ -69,6 +69,7 @@ class AsyncListener:
     )
 
     def __init__(self, zc: "Zeroconf") -> None:
+        print(f"AsyncListener - __init__ called with zc: {zc}")
         self.zc = zc
         self._registry = zc.registry
         self._record_manager = zc.record_manager
@@ -85,6 +86,7 @@ class AsyncListener:
     def datagram_received(
         self, data: _bytes, addrs: Union[Tuple[str, int], Tuple[str, int, int, int]]
     ) -> None:
+        print(f"AsyncListener - datagram_received called with data: {data}, addrs: {addrs}")
         data_len = len(data)
         debug = DEBUG_ENABLED()
 
@@ -92,7 +94,7 @@ class AsyncListener:
             # Guard against oversized packets to ensure bad implementations cannot overwhelm
             # the system.
             if debug:
-                log.debug(
+                print(
                     "Discarding incoming packet with length %s, which is larger "
                     "than the absolute maximum size of %s",
                     data_len,
@@ -110,6 +112,7 @@ class AsyncListener:
         data: _bytes,
         addrs: Union[Tuple[str, int], Tuple[str, int, int, int]],
     ) -> None:
+        print(f"AsyncListener - _process_datagram_at_time called with debug: {debug}, data_len: {data_len}, now: {now}, data: {data}, addrs: {addrs}")
         if (
             self.data == data
             and (now - _DUPLICATE_PACKET_SUPPRESSION_INTERVAL) < self.last_time
@@ -118,7 +121,7 @@ class AsyncListener:
         ):
             # Guard against duplicate packets
             if debug:
-                log.debug(
+                print(
                     "Ignoring duplicate message with no unicast questions received from %s [socket %s] (%d bytes) as [%r]",
                     addrs,
                     self.sock_description,
@@ -129,29 +132,28 @@ class AsyncListener:
 
         if len(addrs) == 2:
             v6_flow_scope: Union[Tuple[()], Tuple[int, int]] = ()
-            # https://github.com/python/mypy/issues/1178
             addr, port = addrs  # type: ignore
             addr_port = addrs
             if TYPE_CHECKING:
                 addr_port = cast(Tuple[str, int], addr_port)
             scope = None
         else:
-            # https://github.com/python/mypy/issues/1178
             addr, port, flow, scope = addrs  # type: ignore
             if debug:  # pragma: no branch
-                log.debug(
-                    "IPv6 scope_id %d associated to the receiving interface", scope
-                )
+                print(f"IPv6 scope_id {scope} associated to the receiving interface")
             v6_flow_scope = (flow, scope)
             addr_port = (addr, port)
 
         msg = DNSIncoming(data, addr_port, scope, now)
+        
+        print(f"AsyncListener:_process_datagram_at_time - incoming msg: {msg}")
+        
         self.data = data
         self.last_time = now
         self.last_message = msg
         if msg.valid is True:
             if debug:
-                log.debug(
+                print(
                     "Received from %r:%r [socket %s]: %r (%d bytes) as [%r]",
                     addr,
                     port,
@@ -162,7 +164,7 @@ class AsyncListener:
                 )
         else:
             if debug:
-                log.debug(
+                print(
                     "Received from %r:%r [socket %s]: (%d bytes) [%r]",
                     addr,
                     port,
@@ -192,14 +194,12 @@ class AsyncListener:
         transport: _WrappedTransport,
         v6_flow_scope: Union[Tuple[()], Tuple[int, int]],
     ) -> None:
-        """Deal with incoming query packets.  Provides a response if
-        possible."""
+        print(f"AsyncListener - handle_query_or_defer called with msg: {msg}, addr: {addr}, port: {port}, transport: {transport}, v6_flow_scope: {v6_flow_scope}")
         if not msg.truncated:
             self._respond_query(msg, addr, port, transport, v6_flow_scope)
             return
 
         deferred = self._deferred.setdefault(addr, [])
-        # If we get the same packet we ignore it
         for incoming in reversed(deferred):
             if incoming.data == msg.data:
                 return
@@ -219,7 +219,7 @@ class AsyncListener:
         )
 
     def _cancel_any_timers_for_addr(self, addr: _str) -> None:
-        """Cancel any future truncated packet timers for the address."""
+        print(f"AsyncListener - _cancel_any_timers_for_addr called with addr: {addr}")
         if addr in self._timers:
             self._timers.pop(addr).cancel()
 
@@ -231,7 +231,7 @@ class AsyncListener:
         transport: _WrappedTransport,
         v6_flow_scope: Union[Tuple[()], Tuple[int, int]],
     ) -> None:
-        """Respond to a query and reassemble any truncated deferred packets."""
+        print(f"AsyncListener - _respond_query called with msg: {msg}, addr: {addr}, port: {port}, transport: {transport}, v6_flow_scope: {v6_flow_scope}")
         self._cancel_any_timers_for_addr(addr)
         packets = self._deferred.pop(addr, [])
         if msg:
@@ -242,15 +242,12 @@ class AsyncListener:
         )
 
     def error_received(self, exc: Exception) -> None:
-        """Likely socket closed or IPv6."""
-        # We preformat the message string with the socket as we want
-        # log_exception_once to log a warrning message once PER EACH
-        # different socket in case there are problems with multiple
-        # sockets
+        print(f"AsyncListener - error_received called with exc: {exc}")
         msg_str = f"Error with socket {self.sock_description}): %s"
         QuietLogger.log_exception_once(exc, msg_str, exc)
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        print(f"AsyncListener - connection_made called with transport: {transport}")
         wrapped_transport = make_wrapped_transport(
             cast(asyncio.DatagramTransport, transport)
         )
@@ -260,4 +257,5 @@ class AsyncListener:
         )
 
     def connection_lost(self, exc: Optional[Exception]) -> None:
-        """Handle connection lost."""
+        print(f"AsyncListener - connection_lost called with exc: {exc}")
+
