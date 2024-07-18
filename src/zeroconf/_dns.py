@@ -679,3 +679,4 @@ class DNSRRSet:
         if other is None:
             return False
         return other.ttl > (record.ttl / 2)
+

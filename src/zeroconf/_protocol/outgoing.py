@@ -557,3 +557,4 @@ class DNSOutgoing:
 
         self.state = STATE_FINISHED
         return packets_data
+

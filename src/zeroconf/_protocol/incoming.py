@@ -484,3 +484,4 @@ class DNSIncoming:
         raise IncomingDecodeError(
             f"Corrupt packet received while decoding name from {self.source}"
         )
+        
