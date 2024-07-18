@@ -36,6 +36,7 @@ from .._dns import (
     DNSRecord,
     DNSService,
     DNSText,
+    DNSRecordType
 )
 from .._exceptions import BadTypeInNameException
 from .._history import QuestionHistory
@@ -845,8 +846,6 @@ class ServiceInfo(RecordUpdateListener):
         question_type: Optional[DNSQuestionType] = None,
         addr: Optional[str] = None,
         port: int = _MDNS_PORT,
-        record_type: DNSRecordType = None,
-        load_from_cache: bool = True
     ) -> bool:
         """Returns true if the service could be discovered on the
         network, and updates this object with details discovered.
